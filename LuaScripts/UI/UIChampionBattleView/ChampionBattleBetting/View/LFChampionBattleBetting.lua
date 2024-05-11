@@ -1,0 +1,581 @@
+--
+--local LFChampionBattleBetting = BaseClass("LFChampionBattleBetting", UIBaseView)
+--local base = UIBaseView
+--
+--local mask_btn_path = "maskBgBtn"
+--local close_btn_path = "bg/Button_Close"
+--local titleTxt_path = "bg/Image_bg/titleTxt"
+--local VSTxt_path = "bg/Image_bg/VS/VSTxt"
+--
+--local left_player_head_path = "bg/Image_bg/Left/leftPlayerHeadBtn/UIPlayerHead/LeftHeadIcon"
+--local leftNameTxt_path = "bg/Image_bg/Left/leftNameTxt"
+--local leftFightTxt_path = "bg/Image_bg/Left/fighting/leftFightTxt"
+--local leftScoreTxt_path = "bg/Image_bg/Left/ranking/leftScoreTxt"
+--
+--local right_player_head_path = "bg/Image_bg/Right/rightPlayerHeadBtn/UIPlayerHead/RightHeadIcon"
+--local rightNameTxt_path = "bg/Image_bg/Right/rightNameTxt"
+--local rightFightTxt_path = "bg/Image_bg/Right/fighting/rightFightTxt"
+--local rightScoreTxt_path = "bg/Image_bg/Right/ranking/rightScoreTxt"
+--local infoTipsBtn_path = "bg/Image_bg/Right/infoTipsBtn"
+--
+--local debugScoreTxt_path = "bg/debugScoreTxt"
+--local isMyselfLabel_path = "bg/Image_bg/Bottom/isMyselfLabel"
+--
+--local leftRateTxt_path = "bg/Image_bg/Bottom/bettingCon/Left/leftRateTxt"
+--local leftGetTxt_path = "bg/Image_bg/Bottom/bettingCon/Left/leftGetTxt"
+--local leftDiamondSlider_path = "bg/Image_bg/Bottom/bettingCon/Left/leftDiamondSlider"
+--local leftSliderValueTxt_path = "bg/Image_bg/Bottom/bettingCon/Left/leftDiamondSlider/leftSliderValueTxt"
+--local leftBetBtn_path = "bg/Image_bg/Bottom/bettingCon/Left/leftBetBtn"
+--local leftBetBtnTxt_path = "bg/Image_bg/Bottom/bettingCon/Left/leftBetBtn/leftBetBtnTxt"
+--
+--local rightRateTxt_path = "bg/Image_bg/Bottom/bettingCon/Right/rightRateTxt"
+--local rightGetTxt_path = "bg/Image_bg/Bottom/bettingCon/Right/rightGetTxt"
+--local rightDiamondSlider_path = "bg/Image_bg/Bottom/bettingCon/Right/rightDiamondSlider"
+--local rightSliderValueTxt_path = "bg/Image_bg/Bottom/bettingCon/Right/rightDiamondSlider/rightSliderValueTxt"
+--local rightBetBtn_path = "bg/Image_bg/Bottom/bettingCon/Right/rightBetBtn"
+--local rightBetBtnTxt_path = "bg/Image_bg/Bottom/bettingCon/Right/rightBetBtn/rightBetBtnTxt"
+--
+--local function OnCreate(self)
+--	base.OnCreate(self)
+--	self:DataDefine()
+--	self:ComponentDefine()
+--	self:OnInit()
+--end
+--
+--local function OnDestroy(self)
+--	self:ComponentDestroy()
+--	self:DataDestroy()
+--	base.OnDestroy(self)
+--end
+--
+--local function ComponentDefine(self)
+--	self.mask_btn = self:AddComponent(UIButton, mask_btn_path)
+--	self.close_btn = self:AddComponent(UIButton, close_btn_path)
+--	self.titleTxt = self:AddComponent(UIText, titleTxt_path)
+--	self.VSTxt = self:AddComponent(UIText, VSTxt_path)
+--
+--	self.left_player_head = self:AddComponent(UIPlayerHead, left_player_head_path)
+--	self.leftNameTxt = self:AddComponent(UIText, leftNameTxt_path)
+--	self.leftFightTxt = self:AddComponent(UIText, leftFightTxt_path)
+--	self.leftScoreTxt = self:AddComponent(UIText, leftScoreTxt_path)
+--
+--	self.right_player_head = self:AddComponent(UIPlayerHead, right_player_head_path)
+--	self.rightNameTxt = self:AddComponent(UIText, rightNameTxt_path)
+--	self.rightFightTxt = self:AddComponent(UIText, rightFightTxt_path)
+--	self.rightScoreTxt = self:AddComponent(UIText, rightScoreTxt_path)
+--	self.infoTipsBtn = self:AddComponent(UIButton, infoTipsBtn_path)
+--
+--	self.debugScoreTxt = self:AddComponent(UIText, debugScoreTxt_path)
+--	self.isMyselfLabel = self:AddComponent(UIText, isMyselfLabel_path)
+--
+--	self.leftRateTxt = self:AddComponent(UIText, leftRateTxt_path)
+--	self.leftGetTxt = self:AddComponent(UIText, leftGetTxt_path)
+--	self.leftDiamondSlider = self:AddComponent(UISlider, leftDiamondSlider_path)
+--	self.leftSliderValueTxt = self:AddComponent(UIText, leftSliderValueTxt_path)
+--	self.leftBetBtn = self:AddComponent(UIButton, leftBetBtn_path)
+--	self.leftBetBtnTxt = self:AddComponent(UIText, leftBetBtnTxt_path)
+--
+--	self.rightRateTxt = self:AddComponent(UIText, rightRateTxt_path)
+--	self.rightGetTxt = self:AddComponent(UIText, rightGetTxt_path)
+--	self.rightDiamondSlider = self:AddComponent(UISlider, rightDiamondSlider_path)
+--	self.rightSliderValueTxt = self:AddComponent(UIText, rightSliderValueTxt_path)
+--	self.rightBetBtn = self:AddComponent(UIButton, rightBetBtn_path)
+--	self.rightBetBtnTxt = self:AddComponent(UIText, rightBetBtnTxt_path)
+--
+--
+--	self.mask_btn = self:AddComponent(UIButton, mask_btn_path)
+--	self.close_btn = self:AddComponent(UIButton, close_btn_path)
+--	self.infoTipsBtn = self:AddComponent(UIButton, infoTipsBtn_path)
+--	self.leftBetBtn = self:AddComponent(UIButton, leftBetBtn_path)
+--	self.rightBetBtn = self:AddComponent(UIButton, rightBetBtn_path)
+--
+--	self.mask_btn:SetOnClick(function()
+--		SoundUtil.PlayEffect(SoundAssets.Music_Effect_Button)
+--		self.ctrl:CloseSelf()
+--	end)
+--	self.close_btn:SetOnClick(function()
+--		SoundUtil.PlayEffect(SoundAssets.Music_Effect_Button)
+--		self.ctrl:CloseSelf()
+--	end)
+--	self.infoTipsBtn:SetOnClick(function()
+--		SoundUtil.PlayEffect(SoundAssets.Music_Effect_Button)
+--		self:onClick_infoTipsBtn()
+--	end)
+--	self.leftBetBtn:SetOnClick(function()
+--		SoundUtil.PlayEffect(SoundAssets.Music_Effect_Button)
+--		self:onClick_leftBetBtn()
+--	end)
+--	self.rightBetBtn:SetOnClick(function()
+--		SoundUtil.PlayEffect(SoundAssets.Music_Effect_Button)
+--		self:onClick_rightBetBtn()
+--	end)
+--
+--	self.leftDiamondSlider:SetOnValueChanged(function (value)
+--		self:onValueChanged_leftDiamondSlider(value)
+--	end)
+--	self.rightDiamondSlider:SetOnValueChanged(function (value)
+--		self:onValueChanged_rightDiamondSlider(value)
+--	end)
+--end
+--
+--local function DataDefine(self)
+--	self.deltaTimer = nil
+--	self.invokeParam1 = nil
+--	self.invokeParam2 = nil
+--	self.leftOdds = 0
+--	self.rightOdds = 0
+--	self.leftTotalBet = 0
+--	self.rightTotalBet = 0
+--	self.betTimes = 0 --当前押注次数
+--	self.bettedIndex = 0 --0 押注uid1左面的选手  1 押注uid2右面的选手, -1 未押注
+--	self.totalWinCount = 0    --总赢钻石数
+--	self.maxTimes = 0 --最大押注次数
+--	self.leftPlayerName = nil
+--	self.rightPlayerName = nil
+--	self.isFirstOpen = true  --是否为首次打开界面
+--	self.betStageHasOver = false --当前选中押注玩家阶段是否已结束
+--	self.champ_battle_betK3 = 0 --每次押注上限
+--	self.betPhase = 0
+--	self.betlocation = 0
+--	self.groupData = nil
+--end
+--
+--local function ComponentDestroy(self)
+--	self.mask_btn_path = nil
+--	self.close_btn_path = nil
+--	self.titleTxt_path = nil
+--	self.VSTxt_path = nil
+--
+--	self.left_player_head_path = nil
+--	self.leftNameTxt_path = nil
+--	self.leftFightTxt_path = nil
+--	self.leftScoreTxt_path = nil
+--
+--	self.right_player_head_path = nil
+--	self.rightNameTxt_path = nil
+--	self.rightFightTxt_path = nil
+--	self.rightScoreTxt_path = nil
+--	self.infoTipsBtn_path = nil
+--
+--	self.debugScoreTxt_path = nil
+--	self.isMyselfLabel_path = nil
+--
+--	self.leftRateTxt_path = nil
+--	self.leftGetTxt_path = nil
+--	self.leftDiamondSlider_path = nil
+--	self.leftSliderValueTxt_path = nil
+--	self.leftBetBtn_path = nil
+--	self.leftBetBtnTxt_path = nil
+--
+--	self.rightRateTxt_path = nil
+--	self.rightGetTxt_path = nil
+--	self.rightDiamondSlider_path = nil
+--	self.rightSliderValueTxt_path = nil
+--	self.rightBetBtn_path = nil
+--	self.rightBetBtnTxt_path = nil
+--end
+--
+--local function DataDestroy(self)
+--	self.betPhase = nil
+--	self.betlocation = nil
+--
+--	self.deltaTimer = nil
+--	self.invokeParam1 = nil
+--	self.invokeParam2 = nil
+--	self.leftOdds = nil
+--	self.rightOdds = nil
+--	self.leftTotalBet = nil
+--	self.rightTotalBet = nil
+--	self.betTimes = nil --当前押注次数
+--	self.bettedIndex = nil --0 押注uid1左面的选手  1 押注uid2右面的选手, -1 未押注
+--	self.totalWinCount = nil    --总赢钻石数
+--	self.maxTimes = nil --最大押注次数
+--	self.groupData = nil
+--	self.leftPlayerName = nil
+--	self.rightPlayerName = nil
+--	self.isFirstOpen = nil  --是否为首次打开界面
+--	self.betStageHasOver = nil --当前选中押注玩家阶段是否已结束
+--	self.champ_battle_betK3 = nil --每次押注上限
+--end
+--
+--local function OnAddListener(self)
+--	base.OnAddListener(self)
+--	self:AddUIListener(EventId.ChampionBattleBetViewBack, self.RefreshSeverViewData)
+--	self:AddUIListener(EventId.ChampionBattleBetBack, self.RefreshSeverBetData)
+--end
+--
+--local function OnRemoveListener(self)
+--	base.OnRemoveListener(self)
+--	self:RemoveUIListener(ActivityEventId.ChampionBattleBetViewBack, self.RefreshSeverViewData)
+--	self:RemoveUIListener(ActivityEventId.ChampionBattleBetBack, self.RefreshSeverBetData)
+--end
+--
+----打开UI--
+--local function OnInit(self)
+--	local groupData, betPhase, betlocation = self:GetUserData()
+--	self.betPhase = betPhase
+--	self.betlocation = betlocation
+--	self.groupData = groupData
+--
+--	local champ_battle_betK2 = LuaEntry.DataConfig:TryGetNum("champ_battle_bet", "k2")
+--	self.maxTimes = champ_battle_betK2
+--
+--	self:InitUISlider()
+--	self:RefreshPlayerData()
+--	DataCenter.ActChampionBattleManager:SendChampionBattleBetViewCmd(self.betPhase, self.betlocation)
+--	self:RefreshTime()
+--end
+--
+-------------------------------------------------------
+--
+--local function InitUISlider(self)
+--	--每次押注上限
+--	self.champ_battle_betK3 = LuaEntry.DataConfig:TryGetNum("champ_battle_bet", "k3")
+--	--拖动最小步长
+--	local champ_battle_betK5 = LuaEntry.DataConfig:TryGetNum("champ_battle_bet", "k5")
+--	
+--	local ownerGold =  LuaEntry.Player.gold
+--	if self.champ_battle_betK3 > ownerGold  then
+--		self.champ_battle_betK3 = ownerGold
+--	end
+--	--printInfo("champ_battle_betK3="..champ_battle_betK3..",champ_battle_betK5="..champ_battle_betK5)
+--
+--	self.leftDiamondSlider.normalizedValue = champ_battle_betK5
+--	self.leftDiamondSlider.maxValue = champ_battle_betK3
+--	self.leftDiamondSlider.minValue = 1
+--	self.leftDiamondSlider.value = 1
+--	rightDiamondSlider.normalizedValue = champ_battle_betK5
+--	rightDiamondSlider.maxValue = champ_battle_betK3
+--	rightDiamondSlider.minValue = 1
+--	rightDiamondSlider.value = 1
+--
+--	effect_Leftdiamond:SetActiveEx(false)
+--	effect_Rightdiamond:SetActiveEx(false)
+--end
+-----界面打开和定时刷新返回
+--function RefreshSeverViewData(self, message)
+--	if message == nil then
+--		return
+--	end
+--	leftOdds = message.leftOdds
+--	rightOdds = message.rightOdds
+--	leftTotalBet = message.leftTotalBet
+--	rightTotalBet = message.rightTotalBet
+--	betTimes = message.betTimes
+--	bettedIndex = message.bettedIndex
+--	totalWinCount = message.totalWinCount
+--	RefreshProgressRate()
+--	
+--	if isFirstOpen then
+--		isFirstOpen = false
+--		onValueChanged_leftDiamondSlider()
+--		onValueChanged_rightDiamondSlider()
+--	end
+--	RefreshAllGetTxt()
+--end
+--
+----押注成功返回
+--function RefreshSeverBetData(self, message)
+--	if message == nil then
+--		return
+--	end
+--	CS.UIUtils.ShowTips("312161" , message.count,  string.format("%.2f", message.odds))
+--	leftOdds = message.leftOdds
+--	rightOdds = message.rightOdds
+--	leftTotalBet = message.leftTotalBet
+--	rightTotalBet = message.rightTotalBet
+--	betTimes = message.betTimes
+--	bettedIndex = message.bettedIndex
+--	totalWinCount = message.totalWinCount
+--	RefreshProgressRate()
+--	effect_Leftdiamond:SetActiveEx(false)
+--	effect_Rightdiamond:SetActiveEx(false)
+--	if bettedIndex == 0 then
+--		effect_Leftdiamond:SetActiveEx(true)
+--	elseif bettedIndex == 1 then
+--		effect_Rightdiamond:SetActiveEx(true)
+--	end
+--	RefreshAllGetTxt()
+--end
+--
+--function RefreshAllGetTxt()
+--	if bettedIndex == -1  then
+--		setGetTxt(0)
+--		setGetTxt(1)
+--	elseif bettedIndex == 0 then
+--		rightGetTxt.gameObject:SetActiveEx(false)
+--		setGetTxt(0)	
+--	elseif bettedIndex == 1 then
+--		leftGetTxt.gameObject:SetActiveEx(false)
+--		setGetTxt(1)
+--	end
+--end
+--
+----服务器数据返回处理
+--function RefreshSeverDataParam(self,lOdds, rOdds, lTotalBet, rTotalBet, bTimes, betIndex, totalCount)
+--	leftOdds = lOdds
+--	rightOdds = rOdds
+--	leftTotalBet = lTotalBet
+--	rightTotalBet = rTotalBet
+--	betTimes = bTimes
+--	bettedIndex = betIndex
+--	totalWinCount = totalCount
+--	RefreshProgressRate()
+--end
+--
+----刷新开启阶段数据
+--function RefreshProgressRate()
+--	if bettedIndex == 0 then
+--		CS.LF.LuaInterfaceCommon.SetGray(rightBetBtnBg.transform, true)
+--	elseif bettedIndex == 1 then
+--		CS.LF.LuaInterfaceCommon.SetGray(leftBetBtnBg.transform, true)
+--	end
+--
+--	leftRateTxt.text = _lang("312086" , string.format("%.2f", leftOdds))
+--	rightRateTxt.text = _lang("312086" , string.format("%.2f", rightOdds))
+--
+--	if blueTatTxt.text ~= tostring(leftTotalBet) then
+--		blueTatTxt.text = "x"..CS.StringUtils.S2Sec(tostring(leftTotalBet))
+--	end
+--	if redRatTxt.text ~= tostring(rightTotalBet) then
+--		redRatTxt.text = "x"..CS.StringUtils.S2Sec(tostring(rightTotalBet))
+--	end
+--
+--	local myScore , otherScore = leftTotalBet, rightTotalBet
+--	local blueRate = ActivityUtils:GetPreciseDecimal(myScore/(myScore + otherScore) ,2)
+--	local redRate = 1- blueRate
+--	
+--	effect_ui_LFAllianceBattleActView_005:SetActiveEx(true)
+--	invokeParam2 = Invoke:DelayCall(function()   
+--		if redSlider == nil or redSlider.gameObject == nil then
+--			return
+--		end
+--		local fromValue = redSlider.value
+--		local toValue = redRate
+--		CSLuaInterfaceCommon.DoTweenFloatTo(fromValue, toValue , 0.3, function(x)
+--			redSlider.value = x
+--		end, function(x) end)
+--
+--		CSLuaInterfaceCommon.DoTweenFloatTo(1-fromValue, 1-toValue , 0.3, function(x)			
+--			blueSlider.value = x
+--		end, function(x) end)
+--    end, 0.01)
+--end
+--
+----刷新押注玩家数据
+--function RefreshPlayerData()
+--	rightPlayerName = _lang("312059")
+--	leftPlayerName = _lang("312059")
+--	self.isMyselfLabel.gameObject:SetActiveEx(false)
+--	self.bettingCon:SetActiveEx(true)
+--	---@type ActChampionBattleInfo
+--	local championBattleInfo = ActivityControllerInst.championBattleCon:GetChampionBattleInfo()
+--	for i = 1, 2 do
+--		local player = championBattleInfo:GetPlayerMsgByUid(groupData["uid"..i])
+--		if player ~= nil then
+--			if i == 1 then
+--				leftPlayerName = player.name
+--				CS.LF.LuaInterfaceCommon.SetGray(leftBetBtnBg.transform, false)
+--			elseif i == 2 then
+--				rightPlayerName = player.name
+--				CS.LF.LuaInterfaceCommon.SetGray(rightBetBtnBg.transform, false)
+--			end	
+--			betStageHasOver = false
+--			if groupData.loseUid ~= nil or groupData.winUid ~= nil then--押注阶段已过
+--				betStageHasOver = true
+--				CS.LF.LuaInterfaceCommon.SetGray(leftBetBtnBg.transform, true)
+--				CS.LF.LuaInterfaceCommon.SetGray(rightBetBtnBg.transform, true)
+--			end		
+--			CS.CommonUtils.LoadHeadEx(player.uid, player.pic, player.picver, self["headImg"..i])
+--			local abbr = " "
+--			if isNil(player.abbr) == false then
+--				abbr = "["..player.abbr.."]"
+--			end
+--			self["nameTxt"..i].text = "#"..player.serverId..abbr..player.name
+--			self["fightTxt"..i].text = CS.StringUtils.S2Sec(tostring(player.power))
+--			local rank = championBattleInfo:GetPlayerRankByUid(player.uid)
+--			self["scoreTxt"..i].text = rank--groupData["score"..i]
+--			--printInfo(i.."uid====="..groupData["uid"..i]..",GameEntry.Data.Player.Uid="..GameEntry.Data.Player.Uid)
+--			
+--			if groupData["uid"..i] == GameEntry.Data.Player.Uid then
+--				self.isMyselfLabel.gameObject:SetActiveEx(true)
+--				self.bettingCon:SetActiveEx(false)
+--			end
+--		else
+--			self["headImg"..i]:LoadAsync("default_sp")
+--			self["nameTxt"..i].text = ""
+--			self["fightTxt"..i].text = ""
+--			self["scoreTxt"..i].text = ""
+--		end
+--	end
+--end
+--
+--function RefreshTime()
+--	if deltaTimer == nil  then
+--		deltaTimer = DeltaTimer.New(function ()
+--			OnTimer()
+--		end, 5, -1, true)
+--		deltaTimer:Start()
+--	else
+--		deltaTimer:Reset(function ()
+--			OnTimer()
+--		end, 5, -1 , true)
+--	end
+--    OnTimer()
+--end
+--
+-----倒计时
+--function OnTimer()   
+--	if gameObject:IsNull() then
+--		return
+--	end
+--	--printInfo("界面打开5秒执行一次请求")
+--	ActivityControllerInst:SendChampionBattleBetViewCmd(betPhase,betlocation)
+--end
+----------------------------------------------------
+--
+----------------------------------------------------
+--function onClick_Button_Close()
+--	self.mono:CloseSelf();
+--end
+--
+--function onClick_maskBgBtn()
+--	self.mono:CloseSelf()
+--end
+--
+--function onClick_leftPlayerHeadBtn()
+--	local leftUid = groupData["uid1"]
+--	if string.IsNullOrEmpty(leftUid) then 
+--		return 
+--	end
+--	AccountManager.showPlayerInfoView(leftUid)
+--end
+--
+--function onClick_rightPlayerHeadBtn()
+--	local rightUid = groupData["uid2"]
+--	if string.IsNullOrEmpty(rightUid) then 
+--		return 
+--	end
+--	AccountManager.showPlayerInfoView(rightUid)
+--end
+--
+--function onValueChanged_redSlider()
+--
+--end
+--
+--function onValueChanged_blueSlider()
+--
+--end
+--
+--function onValueChanged_leftDiamondSlider()
+--	--printInfo("leftDiamondSlider.value="..leftDiamondSlider.value)
+--	local ownerGold =  LuaEntry.Player.gold
+--	if leftDiamondSlider.value > ownerGold then
+--		return
+--	end
+--	
+--	if champ_battle_betK3 >= ownerGold then
+--		champ_battle_betK3 = ownerGold
+--	end
+--	local rate = CS.StringUtils.S2Sec(tostring(math.floor(leftDiamondSlider.value)))
+--	leftSliderValueTxt.text = rate.."/"..CS.StringUtils.S2Sec(tostring(champ_battle_betK3))
+--	
+--	setGetTxt(0)
+--end
+--
+--function onValueChanged_rightDiamondSlider()
+--	--printInfo("rightDiamondSlider.value="..rightDiamondSlider.value)
+--	local ownerGold =  LuaEntry.Player.gold
+--	if rightDiamondSlider.value > ownerGold then
+--		return
+--	end
+--	
+--	if champ_battle_betK3 >= ownerGold then
+--		champ_battle_betK3 = ownerGold
+--	end
+--	local rate = CS.StringUtils.S2Sec(tostring(math.floor(rightDiamondSlider.value)))
+--	rightSliderValueTxt.text = rate.."/"..CS.StringUtils.S2Sec(tostring(champ_battle_betK3))
+--
+--	setGetTxt(1)
+--end
+----type: -1未下注; 0 左下注， 1 右下注
+--function setGetTxt(type)
+--	if type == 0 then
+--		local leftTimes = maxTimes
+--		local hasTotalWinCount = 0
+--		if bettedIndex == -1 or bettedIndex == 0 then
+--			--策划调整，又不需要加上之前下注的值
+--			--hasTotalWinCount = totalWinCount
+--			leftTimes = maxTimes - betTimes
+--		end
+--		local batValue = hasTotalWinCount + math.floor(leftOdds*leftDiamondSlider.value)
+--		leftGetTxt.text = _lang("312087", batValue, leftTimes)
+--		leftGetTxt.gameObject:SetActiveEx(true)
+--	elseif type == 1 then
+--		local leftTimes = maxTimes
+--		local hasTotalWinCount = 0
+--		if bettedIndex == -1 or bettedIndex == 1 then
+--			--策划调整，又不需要加上之前下注的值
+--			--hasTotalWinCount = totalWinCount
+--			leftTimes = maxTimes - betTimes
+--		end
+--		local batValue = hasTotalWinCount + math.floor(rightOdds*rightDiamondSlider.value)
+--		rightGetTxt.text = _lang("312087", batValue, leftTimes)
+--		rightGetTxt.gameObject:SetActiveEx(true)
+--	end
+--end
+--
+--function onClick_leftBetBtn()
+--	local count = math.floor(leftDiamondSlider.value)
+--	if count == 0 then
+--		return
+--	end
+--	if betStageHasOver then
+--		CS.UIUtils.ShowTips("312099")
+--		return
+--	end
+--	if bettedIndex == 1 then
+--		CS.UIUtils.ShowTips("312098")
+--		return
+--	end
+--	if betTimes >= maxTimes then
+--		CS.UIUtils.ShowTips("312100")
+--		return
+--	end
+--	local title = _lang("312160" , leftPlayerName)
+--	CS.UIUtils.ShowMessage(title, 3, function()
+--		ActivityControllerInst:SendChampionBattleBetCmd(betPhase, betlocation , 0 , count)
+--	end)
+--end
+--
+--function onClick_rightBetBtn()
+--	local count = math.floor(rightDiamondSlider.value)
+--	if count == 0 then
+--		return
+--	end
+--	if betStageHasOver then
+--		CS.UIUtils.ShowTips("312099")
+--		return
+--	end
+--	if bettedIndex == 0 then
+--		CS.UIUtils.ShowTips("312098")
+--		return
+--	end
+--	if betTimes >= maxTimes then
+--		CS.UIUtils.ShowTips("312100")
+--		return
+--	end
+--	local title = _lang("312160" , count, rightPlayerName, (maxTimes - betTimes))
+--	CS.UIUtils.ShowMessage(title, 3, function()
+--		ActivityControllerInst:SendChampionBattleBetCmd(betPhase, betlocation , 1 , count)
+--	end)
+--end
+--
+--function onClick_infoTipsBtn()
+--	local position = infoTipsBtn.transform.position
+--    CS.LFCommonTitleTip.Show(CSDirection.BELOW_RIGHT, "", _lang("312089"), "", Vector2.New(position.x+0.3, position.y-0.25), 1.0, 350, nil)
+--end
+--
+--
+--
+--return LFChampionBattleBetting

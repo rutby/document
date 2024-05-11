@@ -1,0 +1,33 @@
+---@class WelfareTagType
+WelfareTagType = {
+    Unknown         = -1,   -- 未知类型
+    SpecialPack     = 1,    -- 特殊礼包（弹出礼包，见recharge表的type列）
+    MonthCard       = 101,    -- 月卡
+    PremiumPack     = 3,    -- 超值礼包
+    PackStore       = 4,    -- 礼包商城
+    HeroMonthCard   = 5,    -- 英雄月卡(目前没有)
+    WeeklyPackage = 6,     --周礼包
+    --WeekCard        = 6,    -- 周卡
+    Vip1            = 7,    -- VIP1
+    CumulativeRecharge = 8, -- 累充礼包
+    SpecialPackUnique = 9,  -- 用于唯一的特殊礼包，即该类型的页签只允许有一个
+    SpecialPackStoreStyle = 10, -- 特殊礼包 表现形式使用 商店的
+    RobotPack = 12,        -- 机器人礼包
+    PiggyBank = 13,         -- 存钱罐
+    GrowthPlan = 14,        -- 成长计划
+    HeroMedalPackage = 15,  --英雄勋章礼包
+    ScrollPack = 16,  -- 可滑动礼包
+    WeeklyPackageNew = 17,--新周礼包
+    HeroMonthCardNew   = 18,    -- 英雄月卡
+    DailyPackage = 19, --每日特惠
+    WeekCard = 20,--周卡
+    PvePack = 21, -- PVE关内礼包
+    EnergyBank = 22, -- 体力存钱罐
+    KeepPay = 23, -- 每日累充
+    ChainPay = 24, -- 连续充值
+    PaidLottery = 25,--累充抽奖
+    DailyCumulativeRecharge = 26,--每日累充
+    MasteryPop = 27,--专精弹出礼包
+    FirstCharge = 28,--首充礼包 ps:跟首充没关系,但就叫这个
+    DailyMustBuy = 102, --每日必买
+}
