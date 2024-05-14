@@ -1,0 +1,505 @@
+diff --git a/cocos2d/core/assets/material/CCMaterial.js b/cocos2d/core/assets/material/CCMaterial.js
+index e0249b3..6237c37 100644
+--- a/cocos2d/core/assets/material/CCMaterial.js
++++ b/cocos2d/core/assets/material/CCMaterial.js
+@@ -141,7 +141,17 @@ let Material = cc.Class({
+                 this._techniqueIndex = v;
+                 this._effect.switchTechnique(v);
+             }
+-        }
++        },
++
++        _useGPUInstancing: false,
++        useGPUInstancing: {
++            get () {
++                return this._useGPUInstancing;
++            },
++            set (val) {
++                this._useGPUInstancing = val;
++            }
++        },
+     },
+ 
+     statics: {
+diff --git a/cocos2d/core/mesh/mesh-renderer.js b/cocos2d/core/mesh/mesh-renderer.js
+index 483af9a..81b768b 100644
+--- a/cocos2d/core/mesh/mesh-renderer.js
++++ b/cocos2d/core/mesh/mesh-renderer.js
+@@ -62,7 +62,8 @@ export default class MeshRendererAssembler extends Assembler {
+ 
+             let material = materials[i] || materials[0];
+ 
+-            if (!enableAutoBatch || !meshData.canBatch || ia._primitiveType !== gfx.PT_TRIANGLES) {
++            /** @Feat GPU-Instancing */
++            if (!material.useGPUInstancing && !enableAutoBatch || !meshData.canBatch || ia._primitiveType !== gfx.PT_TRIANGLES) {
+                 renderer._flush();
+ 
+                 renderer.material = material;
+@@ -82,8 +83,14 @@ export default class MeshRendererAssembler extends Assembler {
+             renderer.material = material;
+             renderer.cullingMask = comp.node._cullingMask;
+             renderer.node = renderer._dummyNode;
+-            
+-            this._fillBuffer(comp, meshData, renderer, i);
++
++            /** @Feat GPU-Instancing */
++            if (material.useGPUInstancing) {
++                this._fillBufferInstancing(comp, meshData, renderer, i);
++                break;
++            } else {
++                this._fillBuffer(comp, meshData, renderer, i);
++            }
+         }
+ 
+         if (CC_DEBUG &&
+@@ -102,6 +109,45 @@ export default class MeshRendererAssembler extends Assembler {
+         }
+     }
+ 
++    _fillBufferInstancing (comp, meshData, renderer, dataIndex) {
++        if (renderer.merge) {
++            renderer.merge(gfx, comp);
++        }
++        
++        let vtxFormat = meshData.vfm;
++        vtxFormat.useGPUInstancing = true;
++
++        let vData = meshData.getVData(Float32Array);
++        let vertexCount = (vData.byteLength / vtxFormat._bytes) | 0;
++        
++        let indices = meshData.getIData(Uint16Array);
++        let indicesCount = indices.length;
++
++        let buffer = renderer.getBuffer('mesh', vtxFormat);
++
++        if (renderer._buffer !== buffer) {
++            renderer._flush();
++            renderer._buffer = buffer;
++        }
++
++        if (!buffer.initedForGPUInstancing) {
++            buffer.initedForGPUInstancing = true;
++
++            let offsetInfo = buffer.request(vertexCount, indicesCount);
++            let indiceOffset = offsetInfo.indiceOffset,
++                vertexOffset = offsetInfo.byteOffset >> 2,
++                vertexId = offsetInfo.vertexOffset,
++                vbuf = buffer._vData,
++                ibuf = buffer._iData;
++
++            for (let i = 0; i < indicesCount; i++) {
++                ibuf[indiceOffset + i] = vertexId + indices[i];
++            }
++
++            vbuf.set(vData);
++        }
++    }
++
+     _fillBuffer (comp, meshData, renderer, dataIndex) {
+         let vData = meshData.getVData(Float32Array);
+ 
+@@ -132,7 +178,7 @@ export default class MeshRendererAssembler extends Assembler {
+         }
+     }
+ 
+-    _updateWorldVertices (dataIndex, vertexCount, local, vtxFormat, wolrdMatrix) {
++    _updateWorldVertices (dataIndex, vertexCount, local, vtxFormat, worldMatrix) {
+         let world = this._worldDatas[dataIndex];
+         if (!world) {
+             world = this._worldDatas[dataIndex] = new Float32Array(local.length);
+@@ -155,7 +201,7 @@ export default class MeshRendererAssembler extends Assembler {
+                     _tmp_vec3.y = local[offset + 1];
+                     _tmp_vec3.z = local[offset + 2];
+         
+-                    transformMat4(_tmp_vec3, _tmp_vec3, wolrdMatrix);
++                    transformMat4(_tmp_vec3, _tmp_vec3, worldMatrix);
+ 
+                     world[offset] = _tmp_vec3.x;
+                     world[offset + 1] = _tmp_vec3.y;
+diff --git a/cocos2d/core/renderer/webgl/mesh-buffer.js b/cocos2d/core/renderer/webgl/mesh-buffer.js
+index f8d300f..48c4ece 100644
+--- a/cocos2d/core/renderer/webgl/mesh-buffer.js
++++ b/cocos2d/core/renderer/webgl/mesh-buffer.js
+@@ -235,6 +235,7 @@ let MeshBuffer = cc.Class({
+         this.indiceStart = 0;
+ 
+         this._dirty = false;
++        this.initedForGPUInstancing = false;
+     },
+ 
+     destroy () {
+diff --git a/cocos2d/core/renderer/webgl/model-batcher.js b/cocos2d/core/renderer/webgl/model-batcher.js
+index 7655b15..6d7aa56 100644
+--- a/cocos2d/core/renderer/webgl/model-batcher.js
++++ b/cocos2d/core/renderer/webgl/model-batcher.js
+@@ -41,6 +41,9 @@ const empty_material = new Material();
+ const empty_ia = new InputAssembler();
+ empty_ia._count = 0;
+ 
++const INITIAL_CAPACITY = 32;
++const MAX_CAPACITY = 1024;
++
+ var ModelBatcher = function (device, renderScene) {
+     this._renderScene = renderScene;
+     this._device = device;
+@@ -73,6 +76,12 @@ var ModelBatcher = function (device, renderScene) {
+     this.parentOpacity = 1;
+     this.parentOpacityDirty = 0;
+     this.worldMatDirty = 0;
++
++    /** @Feat GPU-Instancing */
++    this.instance = {
++        count: 0,
++        capacity: INITIAL_CAPACITY,
++    };
+ };
+ 
+ ModelBatcher.prototype = {
+@@ -110,6 +119,77 @@ ModelBatcher.prototype = {
+         this.parentOpacity = 1;
+         this.parentOpacityDirty = 0;
+         this.worldMatDirty = 0;
++
++        /** @Feat GPU-Instancing */
++        this.instance.count = 0;
++        this.instance.material = null;
++    },
++
++    /** @Notice 仅支持单一材质的实例化 */
++    merge(gfx, comp) {
++        /**
++         * 1. 初始化缓冲区
++         * 2. 扩充缓冲区
++         * 3. 提取模型转换矩阵
++         * 4. 更新到vb
++         */
++
++        // 1.
++        if (!this.instance.data) {
++            const stride = 4 * 4 * 4;
++            const data = new Uint8Array(stride * INITIAL_CAPACITY);
++            var vfmt = new gfx.VertexFormat([
++                { name: 'a_matWorld0', type: gfx.ATTR_TYPE_FLOAT32, num: 4, isInstanced: true, },
++                { name: 'a_matWorld1', type: gfx.ATTR_TYPE_FLOAT32, num: 4, isInstanced: true, },
++                { name: 'a_matWorld2', type: gfx.ATTR_TYPE_FLOAT32, num: 4, isInstanced: true, },
++                { name: 'a_matWorld3', type: gfx.ATTR_TYPE_FLOAT32, num: 4, isInstanced: true, },
++            ]);
++            vfmt.element('a_matWorld0').stride = stride;
++            vfmt.element('a_matWorld1').stride = stride;
++            vfmt.element('a_matWorld2').stride = stride;
++            vfmt.element('a_matWorld3').stride = stride;
++            vfmt.name = 'vfmtInstance';
++
++            this.instance.data = data;
++            this.instance.stride = stride;
++            this.instance.vb = new gfx.VertexBuffer(
++                this._device,
++                vfmt,
++                gfx.USAGE_DYNAMIC,
++                this.instance.data,
++            );
++            this.instance.buffer = new Float32Array(16);
++        }
++
++        // 2.
++        if (this.instance.count + 1 > this.instance.capacity) {
++            this.instance.capacity <<= 1;
++            let data = new Uint8Array(this.instance.stride * this.instance.capacity);
++            data.set(this.instance.data);
++            this.instance.data = data;
++
++            this.instance.vb.update(0, data);
++        }
++
++        // 3.
++        let localMatrix = comp.node._matrix.m;
++        let worldMatrix = comp.node._worldMatrix.m;
++
++        let buffer = this.instance.buffer;
++        for (let i = 0; i < 16; i++) {
++            buffer[i] = localMatrix[i];
++        }
++
++        buffer[12] = worldMatrix[12];
++        buffer[13] = worldMatrix[13];
++
++        // 4.
++        let appendData = new Uint8Array(buffer.buffer);
++        let appendOffset = this.instance.count * this.instance.stride;
++        this.instance.data.set(appendData, appendOffset);
++        this.instance.vb.update(appendOffset, appendData);
++        this.instance.count++;
++        this.instance.material = comp._materials[0];
+     },
+ 
+     _flushMaterial (material) {
+@@ -142,25 +222,53 @@ ModelBatcher.prototype = {
+ 
+         let effect = material.effect;
+         if (!effect) return;
+-        
+-        // Generate ia
+-        let ia = this._iaPool.add();
+-        ia._vertexBuffer = buffer._vb;
+-        ia._indexBuffer = buffer._ib;
+-        ia._start = buffer.indiceStart;
+-        ia._count = indiceCount;
+-        
+-        // Generate model
+-        let model = this._modelPool.add();
+-        this._batchedModels.push(model);
+-        model.sortKey = this._sortKey++;
+-        model._cullingMask = this.cullingMask;
+-        model.setNode(this.node);
+-        model.setEffect(effect);
+-        model.setInputAssembler(ia);
+-        
+-        this._renderScene.addModel(model);
+-        buffer.forwardIndiceStartToOffset();
++
++        if (buffer._vertexFormat.useGPUInstancing) {
++            if (this.instance.material != this.material) {
++                return;
++            }
++            const instance = this.instance;
++            instance.vb.instanceCount = instance.count;
++
++            // Generate ia
++            let ia = this._iaPool.add();
++            ia._vertexBuffer = buffer._vb;
++            ia._indexBuffer = buffer._ib;
++            ia._vertexBufferInstance = instance.vb;
++            ia._start = buffer.indiceStart;
++            ia._count = indiceCount;
++            ia._instanceCount = instance.count;
++
++            // Generate model
++            let model = this._modelPool.add();
++            this._batchedModels.push(model);
++            model.sortKey = this._sortKey++;
++            model._cullingMask = this.cullingMask;
++            model.setNode(this.node);
++            model.setEffect(effect);
++            model.setInputAssembler(ia);
++
++            this._renderScene.addModel(model);
++        } else {
++            // Generate ia
++            let ia = this._iaPool.add();
++            ia._vertexBuffer = buffer._vb;
++            ia._indexBuffer = buffer._ib;
++            ia._start = buffer.indiceStart;
++            ia._count = indiceCount;
++            
++            // Generate model
++            let model = this._modelPool.add();
++            this._batchedModels.push(model);
++            model.sortKey = this._sortKey++;
++            model._cullingMask = this.cullingMask;
++            model.setNode(this.node);
++            model.setEffect(effect);
++            model.setInputAssembler(ia);
++            
++            this._renderScene.addModel(model);
++            buffer.forwardIndiceStartToOffset();
++        }
+     },
+ 
+     _flushIA (ia) {
+diff --git a/cocos2d/renderer/core/base-renderer.js b/cocos2d/renderer/core/base-renderer.js
+index e438028..fac18ca 100644
+--- a/cocos2d/renderer/core/base-renderer.js
++++ b/cocos2d/renderer/core/base-renderer.js
+@@ -325,6 +325,13 @@ export default class Base {
+         device.setVertexBuffer(0, ia._vertexBuffer);
+       }
+ 
++      if (ia._vertexBufferInstance) {
++        device.setVertexBuffer(1, ia._vertexBufferInstance);
++        device.setGPUInstancing && device.setGPUInstancing(true, ia._vertexBufferInstance.instanceCount);
++      } else {
++        device.setGPUInstancing && device.setGPUInstancing(false);
++      }
++
+       // set index buffer
+       if (ia._indexBuffer) {
+         device.setIndexBuffer(ia._indexBuffer);
+diff --git a/cocos2d/renderer/core/input-assembler.js b/cocos2d/renderer/core/input-assembler.js
+index 336ac04..0a175fa 100644
+--- a/cocos2d/renderer/core/input-assembler.js
++++ b/cocos2d/renderer/core/input-assembler.js
+@@ -10,6 +10,9 @@ export default class InputAssembler {
+     this._start = 0;
+     this._count = -1;
+ 
++    /** @Feat GPU-Instancing */
++    this._vertexBufferInstance = null;
++
+     // TODO: instancing data
+     // this._stream = 0;
+   }
+diff --git a/cocos2d/renderer/gfx/device.js b/cocos2d/renderer/gfx/device.js
+index 37c99e3..faa1b36 100644
+--- a/cocos2d/renderer/gfx/device.js
++++ b/cocos2d/renderer/gfx/device.js
+@@ -487,8 +487,8 @@ function _commitVertexBuffers(device, gl, cur, next) {
+ 
+         let el = vb._format.element(attr.name);
+         if (!el) {
+-          console.warn(`Can not find vertex attribute: ${attr.name}`);
+-          continue;
++            next.maxStream == 0 && console.warn(`Can not find vertex attribute: ${attr.name}`);
++            continue;
+         }
+ 
+         if (device._enabledAttributes[attr.location] === 0) {
+@@ -498,13 +498,14 @@ function _commitVertexBuffers(device, gl, cur, next) {
+         device._newAttributes[attr.location] = 1;
+ 
+         gl.vertexAttribPointer(
+-          attr.location,
+-          el.num,
+-          el.type,
+-          el.normalize,
+-          el.stride,
+-          el.offset + vbOffset * el.stride
++            attr.location,
++            el.num,
++            el.type,
++            el.normalize,
++            el.stride,
++            el.offset + vbOffset * el.stride
+         );
++        gl.vertexAttribDivisor(attr.location, el.isInstanced ? 1 : 0);
+       }
+     }
+ 
+@@ -598,7 +599,8 @@ export default class Device {
+     }
+ 
+     try {
+-      gl = canvasEL.getContext('webgl', opts)
++      gl = canvasEL.getContext('webgl2', opts)
++        || canvasEL.getContext('webgl', opts)
+         || canvasEL.getContext('experimental-webgl', opts)
+         || canvasEL.getContext('webkit-3d', opts)
+         || canvasEL.getContext('moz-webgl', opts);
+@@ -1134,6 +1136,11 @@ export default class Device {
+     }
+   }
+ 
++  setGPUInstancing(enable, count) {
++    this._next.useGPUInstancing = enable;
++    this._next.instanceCount = count;
++  }
++
+   /**
+    * @method setIndexBuffer
+    * @param {IndexBuffer} buffer
+@@ -1365,12 +1372,24 @@ export default class Device {
+     if (count) {
+       // drawPrimitives
+       if (next.indexBuffer) {
+-        gl.drawElements(
+-          this._next.primitiveType,
+-          count,
+-          next.indexBuffer._format,
+-          base * next.indexBuffer._bytesPerIndex
+-        );
++        /** @Feat GPU-Instancing */
++        if (next.useGPUInstancing) {
++            gl.drawElementsInstanced(
++                this._next.primitiveType,
++                count,
++                next.indexBuffer._format,
++                base * next.indexBuffer._bytesPerIndex,
++                next.instanceCount
++            );
++        } else {
++            gl.drawElements(
++                this._next.primitiveType,
++                count,
++                next.indexBuffer._format,
++                base * next.indexBuffer._bytesPerIndex
++            );
++        }
++        
+       } else {
+         gl.drawArrays(
+           this._next.primitiveType,
+diff --git a/cocos2d/renderer/gfx/state.js b/cocos2d/renderer/gfx/state.js
+index 747ed4a..89cfe2a 100644
+--- a/cocos2d/renderer/gfx/state.js
++++ b/cocos2d/renderer/gfx/state.js
+@@ -49,6 +49,8 @@ const _default = {
+   maxTextureSlot: -1,
+   textureUnits: [],
+   program: null,
++  useGPUInstancing: false,
++  instanceCount: 0,
+ };
+ 
+ export default class State {
+@@ -129,5 +131,8 @@ export default class State {
+     }
+ 
+     this.program = cpy.program;
++
++    this.useGPUInstancing = cpy.useGPUInstancing;
++    this.instanceCount = cpy.instanceCount;
+   }
+ }
+\ No newline at end of file
+diff --git a/cocos2d/renderer/gfx/vertex-buffer.js b/cocos2d/renderer/gfx/vertex-buffer.js
+index 461c237..a582fcc 100644
+--- a/cocos2d/renderer/gfx/vertex-buffer.js
++++ b/cocos2d/renderer/gfx/vertex-buffer.js
+@@ -15,6 +15,7 @@ class VertexBuffer {
+     this._bytesPerVertex = this._format._bytes;
+     this._bytes = data.byteLength;
+     this._numVertices = this._bytes / this._bytesPerVertex;
++    this.instanceCount = 0;
+ 
+     this._needExpandDataStore = true;
+ 
+@@ -73,13 +74,14 @@ class VertexBuffer {
+     let glUsage = this._usage;
+ 
+     gl.bindBuffer(gl.ARRAY_BUFFER, this._glID);
++
+     if (this._needExpandDataStore) {
+-      gl.bufferData(gl.ARRAY_BUFFER, data, glUsage);
+-      this._needExpandDataStore = false;
+-    }
+-    else {
+-      gl.bufferSubData(gl.ARRAY_BUFFER, byteOffset, data);
++        gl.bufferData(gl.ARRAY_BUFFER, data, glUsage);
++        this._needExpandDataStore = false;
++    } else {
++        gl.bufferSubData(gl.ARRAY_BUFFER, byteOffset, data);
+     }
++
+     gl.bindBuffer(gl.ARRAY_BUFFER, null);
+   }
+ 
+diff --git a/cocos2d/renderer/gfx/vertex-format.js b/cocos2d/renderer/gfx/vertex-format.js
+index 8ca8e8a..9211f1c 100644
+--- a/cocos2d/renderer/gfx/vertex-format.js
++++ b/cocos2d/renderer/gfx/vertex-format.js
+@@ -21,6 +21,8 @@ export default class VertexFormat {
+     this._attr2el = {};
+     this._elements = [];
+     this._bytes = 0;
++    /** @Feat GPU-Instancing */
++    this.useGPUInstancing = false;
+ 
+     let hash = "";
+ 
+@@ -35,6 +37,7 @@ export default class VertexFormat {
+         num: info.num,
+         normalize: (info.normalize === undefined) ? false : info.normalize,
+         bytes: info.num * attrTypeBytes(info.type),
++        isInstanced: !!info.isInstanced,
+       };
+ 
+       this._attr2el[el.name] = el;
