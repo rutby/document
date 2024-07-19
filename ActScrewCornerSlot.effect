@@ -1,0 +1,177 @@
+// Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.  
+CCEffect%{
+  techniques: [
+    {
+      passes: [
+        {
+          vert: vs
+          frag: fs
+          cullMode: none
+          blend: true
+        }
+      ]
+      layer: 0
+    }
+  ]
+  properties: {
+    texture: {
+      type: sampler2D
+      value: null
+    }
+    alphaThreshold: {
+      type: number
+      value: 0.5
+    }
+    c_slot_size: {
+      type: number,
+      value: 25
+    }
+    c_content_size: {
+      type: number,
+      value: [0, 0]
+    }
+  }
+%}
+
+%% vs {
+
+precision highp float;
+
+uniform mat4 cc_matViewProj;
+
+#if _USE_MODEL
+  uniform mat4 cc_matWorld;
+#endif
+
+attribute vec3 a_position;
+attribute lowp vec4 a_color;
+
+#if USE_TEXTURE
+  attribute mediump vec2 a_uv0;
+  varying mediump vec2 v_uv0;
+#endif
+
+varying lowp vec4 v_color;
+
+void main () {
+  mat4 mvp;
+  
+  #if _USE_MODEL
+    mvp = cc_matViewProj * cc_matWorld;
+  #else
+    mvp = cc_matViewProj;
+  #endif
+
+  #if USE_TEXTURE
+    v_uv0 = a_uv0;
+  #endif
+
+  v_color = a_color;
+
+  gl_Position = mvp * vec4(a_position, 1);
+}
+
+}
+
+%% fs {
+
+precision highp float;
+
+#if USE_TEXTURE
+  uniform sampler2D texture;
+  varying mediump vec2 v_uv0;
+#endif
+
+#include <alpha-test>
+
+varying lowp vec4 v_color;
+
+uniform float c_slot_size;
+uniform vec2 c_content_size;
+
+uniform mat4 c_matSlot0;
+uniform mat4 c_matSlot1;
+uniform mat4 c_matSlot2;
+uniform mat4 c_matSlot3;
+
+float grave(float factor, vec2 uv, vec2 pos) {
+  vec2 uv0 = vec2(uv.x, uv.y * factor);
+  vec2 pos0 = vec2(pos.x / c_content_size.x + 0.5, pos.y / c_content_size.y + 0.5);
+  float dis = length(uv0 - vec2(pos0.x, (1. - pos0.y) * factor));
+  float dx = c_slot_size / c_content_size.x;
+  float result = 1. - smoothstep(dx, dx-0.001, dis);
+  return result;
+}
+
+void main () {
+  vec4 color = v_color;
+
+  #if USE_TEXTURE
+    float sx = c_content_size.x / 583.;
+    float sy = c_content_size.y / 800.;
+    vec2 fixed_uv = vec2(sx * v_uv0.x, sy * v_uv0.y);
+
+    color *= texture2D(texture, fixed_uv);
+    #if _USE_ETC1_TEXTURE
+      color.a *= texture2D(texture, v_uv0 + vec2(0, 0.5)).r;
+    #endif
+  #endif
+
+  ALPHA_TEST(color);
+
+  // 在图片上扣出孔洞
+  float factor = c_content_size.y / c_content_size.x;
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot0[0][0], c_matSlot0[0][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot0[0][2], c_matSlot0[0][3]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot0[1][0], c_matSlot0[1][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot0[1][2], c_matSlot0[1][3]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot0[2][0], c_matSlot0[2][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot0[2][2], c_matSlot0[2][3]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot0[3][0], c_matSlot0[3][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot0[3][2], c_matSlot0[3][3]));
+
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot1[0][0], c_matSlot1[0][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot1[0][2], c_matSlot1[0][3]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot1[1][0], c_matSlot1[1][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot1[1][2], c_matSlot1[1][3]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot1[2][0], c_matSlot1[2][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot1[2][2], c_matSlot1[2][3]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot1[3][0], c_matSlot1[3][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot1[3][2], c_matSlot1[3][3]));
+
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot2[0][0], c_matSlot2[0][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot2[0][2], c_matSlot2[0][3]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot2[1][0], c_matSlot2[1][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot2[1][2], c_matSlot2[1][3]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot2[2][0], c_matSlot2[2][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot2[2][2], c_matSlot2[2][3]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot2[3][0], c_matSlot2[3][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot2[3][2], c_matSlot2[3][3]));
+
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot3[0][0], c_matSlot3[0][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot3[0][2], c_matSlot3[0][3]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot3[1][0], c_matSlot3[1][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot3[1][2], c_matSlot3[1][3]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot3[2][0], c_matSlot3[2][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot3[2][2], c_matSlot3[2][3]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot3[3][0], c_matSlot3[3][1]));
+  color.a *= grave(factor, v_uv0, vec2(c_matSlot3[3][2], c_matSlot3[3][3]));
+
+  // 圆角
+  float radius = 16. / c_content_size.x;
+  vec2 uv0 = vec2(v_uv0.x, v_uv0.y * factor);
+  float result0 = 1. - smoothstep(radius, radius-0.0001, length(uv0 - vec2(radius, radius)));
+  float result1 = 1. - smoothstep(radius, radius-0.0001, length(uv0 - vec2(1. - radius, radius)));
+  float result2 = 1. - smoothstep(radius, radius-0.0001, length(uv0 - vec2(radius, 1. * factor - radius)));
+  float result3 = 1. - smoothstep(radius, radius-0.0001, length(uv0 - vec2(1. - radius, 1. * factor - radius)));
+
+  float mx0 = step(radius, uv0.x);
+  float mx1 = step(uv0.x, 1. - radius);
+  float my0 = step(radius, uv0.y);
+  float my1 = step(uv0.y, 1. * factor - radius);
+  color.a *= 1. - (result0 * (1. - mx0) * (1. - my0) + result1 * (1. - mx1) * (1. - my0) + result2 * (1. - mx0) * (1. - my1) + result3 * (1. - mx1) * (1. - my1));
+
+  gl_FragColor = color;
+}
+
+}
